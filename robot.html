@@ -1,0 +1,458 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>互動式機器人專案企劃書 (V4.2 甘特圖優化)</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css" xintegrity="sha384-n8MVd4RsNIU0KOVEMVIROPtOQ9IY5dRytQUsLFNican/eYEGgeEenesCUUDEagLK" crossorigin="anonymous">
+    <script src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js" xintegrity="sha384-XjKyOOlGwcjNTAIQHIpgOno0Hl1YQqzUOEleOLALmuqehneUG+vnGctmUb0ZY0l8" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js" xintegrity="sha384-+VBxd3r6XgURycqtZ117nYw44OOcIax56Z4dCRWbxyPt0Koah1uHoK0o4+/RRE05" crossorigin="anonymous"></script>
+    <!-- Chosen Palette: Calm Harmony -->
+    <!-- Application Structure Plan: A single-page dashboard with a top navigation bar for smooth scrolling. The structure prioritizes clarity and exploration: an overview, a detailed BOM table, an interactive accordion for the five project phases, a dedicated visual section for the AI model architecture and a detailed breakdown of the enhanced reward function, and finally a dynamic Gantt chart. This design transforms the dense V3.0 report into a digestible, interactive technical blueprint, allowing users to deep-dive into specific areas like the AI design or the hardware list. -->
+    <!-- Visualization & Content Choices: Report Info: AI Model Architecture -> Goal: Explain complex data flow -> Viz: HTML/CSS flowchart -> Interaction: None, purely visual -> Justification: Clearly illustrates the multi-stage process from sensor input to motor command, which is hard to grasp from text alone. | Report Info: Enhanced Reward Function -> Goal: Detail the components -> Viz: Formatted cards with KaTeX for math -> Interaction: None -> Justification: Separates base rewards from "naturalness" penalties, making the core AI logic clear. | Report Info: Project Timeline -> Goal: Show schedule -> Viz: Dynamic HTML/CSS Gantt Chart -> Interaction: Hover for details -> Justification: More engaging and provides a better sense of duration and overlap than a table. -->
+    <!-- CONFIRMATION: NO SVG graphics used. NO Mermaid JS used. -->
+    <style>
+        body {
+            font-family: 'Noto Sans TC', sans-serif;
+            background-color: #FDFBF8;
+            color: #4A4A4A;
+        }
+        html { scroll-behavior: smooth; }
+        .accordion-content {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.5s ease-in-out;
+        }
+        .gantt-container {
+            position: relative;
+            width: 100%;
+            padding: 1rem 0;
+            overflow-x: auto;
+            border-left: 2px solid #E5E7EB;
+        }
+        .gantt-chart {
+            position: relative;
+            min-width: 900px;
+            height: 350px;
+        }
+        .gantt-bar {
+            position: absolute;
+            height: 35px;
+            background-color: #7CA5B8;
+            border-radius: 0.375rem;
+            transition: all 0.2s ease-in-out;
+            display: flex;
+            align-items: center;
+            justify-content: center; /* 水平置中文字 */
+            font-size: 0.8rem;
+            font-weight: 500;
+            color: white;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            padding: 0 0.75rem;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+        }
+        .gantt-bar:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+        }
+        .gantt-milestone {
+            position: absolute;
+            top: -5px;
+            width: 16px;
+            height: 16px;
+            background-color: #D48C7A;
+            transform: rotate(45deg) translateX(-50%);
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        .gantt-milestone .tooltip {
+            visibility: hidden;
+            width: 140px;
+            background-color: #333;
+            color: #fff;
+            text-align: center;
+            border-radius: 6px;
+            padding: 5px 0;
+            position: absolute;
+            z-index: 1;
+            bottom: 150%;
+            left: 50%;
+            margin-left: -70px;
+            opacity: 0;
+            transition: opacity 0.3s;
+            transform: rotate(-45deg);
+            font-size: 0.75rem;
+        }
+        .gantt-milestone:hover .tooltip {
+            visibility: visible;
+            opacity: 1;
+        }
+        .gantt-month-label {
+            position: absolute;
+            top: -25px;
+            transform: translateX(-50%);
+            font-size: 0.8rem;
+            color: #6B7281;
+        }
+        .gantt-phase-label {
+            position: absolute;
+            left: -170px;
+            width: 160px;
+            text-align: right;
+            font-size: 0.9rem;
+            font-weight: 500;
+            color: #374151;
+        }
+        .flowchart-box {
+            border: 2px solid #D1D5DB;
+            background-color: #FFFFFF;
+            padding: 1rem;
+            border-radius: 0.5rem;
+            text-align: center;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+            flex-grow: 1;
+        }
+        .flowchart-arrow {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2rem;
+            color: #9CA3AF;
+            padding: 0 1rem;
+        }
+    </style>
+</head>
+<body class="antialiased">
+
+    <header class="bg-white/90 backdrop-blur-lg shadow-sm sticky top-0 z-50">
+        <nav class="container mx-auto px-6 py-4 flex justify-between items-center">
+            <div class="text-xl font-bold text-[#3D405B]">自然步態機器人專案 (V4.2)</div>
+            <div class="hidden md:flex items-center space-x-6">
+                <a href="#overview" class="text-gray-600 hover:text-[#D48C7A] transition-colors">專案總覽</a>
+                <a href="#bom" class="text-gray-600 hover:text-[#D48C7A] transition-colors">物料清單</a>
+                <a href="#phases" class="text-gray-600 hover:text-[#D48C7A] transition-colors">執行階段</a>
+                <a href="#ai-design" class="text-gray-600 hover:text-[#D48C7A] transition-colors">AI 設計</a>
+                <a href="#timeline" class="text-gray-600 hover:text-[#D48C7A] transition-colors">時程規劃</a>
+            </div>
+            <button id="mobile-menu-button" class="md:hidden flex items-center">
+                <span class="text-2xl">☰</span>
+            </button>
+        </nav>
+        <div id="mobile-menu" class="hidden md:hidden">
+            <a href="#overview" class="block py-2 px-4 text-sm hover:bg-gray-50">專案總覽</a>
+            <a href="#bom" class="block py-2 px-4 text-sm hover:bg-gray-50">物料清單</a>
+            <a href="#phases" class="block py-2 px-4 text-sm hover:bg-gray-50">執行階段</a>
+            <a href="#ai-design" class="block py-2 px-4 text-sm hover:bg-gray-50">AI 設計</a>
+            <a href="#timeline" class="block py-2 px-4 text-sm hover:bg-gray-50">時程規劃</a>
+        </div>
+    </header>
+
+    <main class="container mx-auto px-6 py-12">
+
+        <section id="overview" class="mb-20 scroll-mt-20">
+            <div class="text-center mb-12">
+                <h1 class="text-4xl md:text-5xl font-bold mb-4 text-gray-800">透過深度學習實現人形機器人更自然的行走</h1>
+                <p class="text-lg text-gray-600 max-w-3xl mx-auto">本專案旨在利用深度強化學習，訓練一個神經網路模型，為自建的18自由度人形機器人生成一個比傳統方法更穩定、流暢且「自然」的行走步態。</p>
+                <div class="mt-4 text-sm text-gray-500">
+                    <span>📍 台中市南區</span> | <span id="project-date">2025年7月28日</span>
+                </div>
+            </div>
+        </section>
+
+        <section id="bom" class="mb-20 scroll-mt-20">
+            <h2 class="text-3xl font-bold text-center mb-10">物料清單 (Bill of Materials)</h2>
+            <div class="max-w-4xl mx-auto bg-white p-6 rounded-xl shadow-lg border border-gray-200">
+                <div class="mb-4 p-4 bg-blue-50 border-l-4 border-blue-400 rounded-r-lg">
+                    <h4 class="font-bold text-blue-800">電源方案推薦</h4>
+                    <p class="text-sm text-blue-700 mt-1">為滿足 Jetson Nano 與 18 顆伺服馬達的瞬間大電流需求，推薦採用 **2S (7.4V) LiPo 鋰電池** 搭配 **大電流 DC-DC 降壓模組**，以提供穩定高效的電力。</p>
+                </div>
+                <div class="overflow-x-auto">
+                    <table class="w-full text-sm text-left text-gray-600">
+                        <thead class="text-xs text-gray-700 uppercase bg-gray-50">
+                            <tr>
+                                <th scope="col" class="px-6 py-3">項目</th>
+                                <th scope="col" class="px-6 py-3">數量</th>
+                                <th scope="col" class="px-6 py-3">預估單價 (NTD)</th>
+                                <th scope="col" class="px-6 py-3">預估總價 (NTD)</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr class="bg-white border-b"><td class="px-6 py-4 font-medium">NVIDIA Jetson Nano 開發套件</td><td class="px-6 py-4">1</td><td class="px-6 py-4">4,500</td><td class="px-6 py-4">4,500</td></tr>
+                            <tr class="bg-gray-50 border-b"><td class="px-6 py-4 font-medium">高速 MicroSD 卡 (64GB A2)</td><td class="px-6 py-4">1</td><td class="px-6 py-4">300</td><td class="px-6 py-4">300</td></tr>
+                            <tr class="bg-white border-b"><td class="px-6 py-4 font-medium">MG90S 金屬齒輪伺服馬達</td><td class="px-6 py-4">18</td><td class="px-6 py-4">80</td><td class="px-6 py-4">1,440</td></tr>
+                            <tr class="bg-gray-50 border-b"><td class="px-6 py-4 font-medium">PCA9685 16通道 PWM 驅動板</td><td class="px-6 py-4">2</td><td class="px-6 py-4">150</td><td class="px-6 py-4">300</td></tr>
+                            <tr class="bg-white border-b"><td class="px-6 py-4 font-medium">2S 7.4V LiPo 鋰電池 (2200mAh, 30C+)</td><td class="px-6 py-4">1</td><td class="px-6 py-4">600</td><td class="px-6 py-4">600</td></tr>
+                            <tr class="bg-gray-50 border-b"><td class="px-6 py-4 font-medium">大電流 DC-DC 降壓模組 (10A+)</td><td class="px-6 py-4">1</td><td class="px-6 py-4">250</td><td class="px-6 py-4">250</td></tr>
+                            <tr class="bg-white border-b"><td class="px-6 py-4 font-medium">B6 LiPo 電池充電器</td><td class="px-6 py-4">1</td><td class="px-6 py-4">800</td><td class="px-6 py-4">800</td></tr>
+                            <tr class="bg-gray-50 border-b"><td class="px-6 py-4 font-medium">3D 列印線材 (PETG/ABS)</td><td class="px-6 py-4">1 kg</td><td class="px-6 py-4">500</td><td class="px-6 py-4">500</td></tr>
+                            <tr class="bg-white border-b"><td class="px-6 py-4 font-medium">雜項 (杜邦線, 螺絲, 軸承等)</td><td class="px-6 py-4">1 批</td><td class="px-6 py-4">300</td><td class="px-6 py-4">300</td></tr>
+                        </tbody>
+                        <tfoot>
+                            <tr class="font-semibold text-gray-900">
+                                <th scope="row" colspan="3" class="px-6 py-3 text-base text-right">預估總計</th>
+                                <td class="px-6 py-3">8,990</td>
+                            </tr>
+                        </tfoot>
+                    </table>
+                </div>
+            </div>
+        </section>
+
+        <section id="phases" class="mb-20 scroll-mt-20">
+            <h2 class="text-3xl font-bold text-center mb-10">專案執行五大階段</h2>
+            <div class="space-y-4 max-w-4xl mx-auto">
+                <div class="accordion-item bg-white rounded-lg shadow-md border border-gray-200">
+                    <button class="accordion-header w-full text-left p-5 font-semibold text-lg flex justify-between items-center hover:bg-gray-50 transition-colors"><span>第一階段：硬體建構與基礎驗證</span><span class="transform transition-transform duration-300">▼</span></button>
+                    <div class="accordion-content"><div class="p-5 border-t text-gray-700 space-y-2">
+                        <p><strong>目標：</strong>將機器人從設計圖變為實體，並確保每個零件都能正常運作。</p>
+                        <ul class="list-decimal list-inside space-y-1 pl-2">
+                            <li>根據 BOM 清單採購元件，並使用 PETG/ABS 材料 3D 列印所有骨架零件。</li>
+                            <li>完成機械結構與 18 顆 MG90S 伺服馬達的組裝。</li>
+                            <li>完成電路連接：Jetson Nano ↔ I2C ↔ PCA9685 ↔ 馬達，並配置獨立電源。</li>
+                            <li>撰寫 Python 腳本，使用 `Adafruit-CircuitPython-PCA9685` 函式庫驗證所有馬達功能。</li>
+                        </ul>
+                    </div></div>
+                </div>
+                <div class="accordion-item bg-white rounded-lg shadow-md border border-gray-200">
+                    <button class="accordion-header w-full text-left p-5 font-semibold text-lg flex justify-between items-center hover:bg-gray-50 transition-colors"><span>第二階段：虛擬環境建構 (數位分身)</span><span class="transform transition-transform duration-300">▼</span></button>
+                    <div class="accordion-content"><div class="p-5 border-t text-gray-700 space-y-2">
+                        <p><strong>目標：</strong>在電腦中創建一個與實體機器人精確對應的「數位分身」，為 AI 訓練打下基礎。</p>
+                        <ul class="list-decimal list-inside space-y-1 pl-2">
+                            <li>在 Fusion 360 中使用 `Fusion2URDF` 外掛，精確定義所有旋轉關節及其運動極限。</li>
+                            <li>為各部件指定物理材質，以計算質量與慣性，並匯出為 `.urdf` 格式。</li>
+                            <li>在 PyBullet 中載入 URDF 模型，並配置重力等物理引擎參數。</li>
+                            <li>**(關鍵)** 進行系統辨識與參數微調，手動調整模擬器中的摩擦力、關節阻尼、馬達屬性，以縮小 Sim-to-Real 差距。</li>
+                        </ul>
+                    </div></div>
+                </div>
+                <div class="accordion-item bg-white rounded-lg shadow-md border border-gray-200">
+                    <button class="accordion-header w-full text-left p-5 font-semibold text-lg flex justify-between items-center hover:bg-gray-50 transition-colors"><span>第三階段：核心 AI 模型訓練</span><span class="transform transition-transform duration-300">▼</span></button>
+                    <div class="accordion-content"><div class="p-5 border-t text-gray-700 space-y-2">
+                        <p><strong>目標：</strong>創建並訓練 AI「大腦」，使其學會自然行走。</p>
+                        <ul class="list-decimal list-inside space-y-1 pl-2">
+                            <li>建立繼承自 `gymnasium.Env` 的自訂強化學習環境 `HumanoidEnv`。</li>
+                            <li>根據論文方法，定義觀察空間 (IMU 時序數據)、特徵提取器 (1D-CNN) 和動作空間 (CPG 參數微調)。</li>
+                            <li>實現包含「基礎任務獎勵」與「自然步態優化獎勵」的組合式獎勵函數。</li>
+                            <li>使用 Stable Baselines3 的 SAC 演算法啟動訓練，並用 TensorBoard 監控獎勵曲線。</li>
+                        </ul>
+                    </div></div>
+                </div>
+                <div class="accordion-item bg-white rounded-lg shadow-md border border-gray-200">
+                    <button class="accordion-header w-full text-left p-5 font-semibold text-lg flex justify-between items-center hover:bg-gray-50 transition-colors"><span>第四階段：模型部署與實機測試</span><span class="transform transition-transform duration-300">▼</span></button>
+                    <div class="accordion-content"><div class="p-5 border-t text-gray-700 space-y-2">
+                        <p><strong>目標：</strong>將虛擬世界中學成的「大腦」移植回實體機器人。</p>
+                        <ul class="list-decimal list-inside space-y-1 pl-2">
+                            <li>在 Jetson Nano 上撰寫 `deploy.py` 腳本，載入訓練好的模型。</li>
+                            <li>建立主迴圈：透過真實 IMU 獲取狀態 → 模型預測動作 → 更新 CPG → 轉換為 PWM 指令 → 發送給馬達。</li>
+                            <li>在安全的環境下進行實機測試，觀察並記錄 Sim-to-Real 差距。</li>
+                        </ul>
+                    </div></div>
+                </div>
+                <div class="accordion-item bg-white rounded-lg shadow-md border border-gray-200">
+                    <button class="accordion-header w-full text-left p-5 font-semibold text-lg flex justify-between items-center hover:bg-gray-50 transition-colors"><span>第五階段：成果分析與文件撰寫</span><span class="transform transition-transform duration-300">▼</span></button>
+                    <div class="accordion-content"><div class="p-5 border-t text-gray-700 space-y-2">
+                        <p><strong>目標：</strong>將辛勤工作整理成專題報告，並展示其價值。</p>
+                        <ul class="list-decimal list-inside space-y-1 pl-2">
+                            <li>錄製影片，並與基於固定規則的傳統步態進行並排比較，突顯 AI 步態的優越性。</li>
+                            <li>按照五大階段的結構，撰寫詳細的專題報告，闡述動機、方法、挑戰與成果。</li>
+                            <li>製作簡報，準備口頭報告。</li>
+                        </ul>
+                    </div></div>
+                </div>
+            </div>
+        </section>
+
+        <section id="ai-design" class="mb-20 scroll-mt-20">
+            <h2 class="text-3xl font-bold text-center mb-10">AI 模型設計深度解析</h2>
+            <div class="bg-white p-8 rounded-xl shadow-lg border border-gray-200">
+                <h3 class="text-2xl font-semibold text-center mb-8">模型架構與數據流</h3>
+                <div class="flex flex-col md:flex-row items-center justify-center space-y-4 md:space-y-0 md:space-x-4">
+                    <div class="flowchart-box">
+                        <p class="font-bold text-lg">觀察空間</p>
+                        <p class="text-sm text-gray-600">IMU 時序數據<br><span class="font-mono text-xs">(128, 3)</span></p>
+                    </div>
+                    <div class="flowchart-arrow">→</div>
+                    <div class="flowchart-box">
+                        <p class="font-bold text-lg">特徵提取器</p>
+                        <p class="text-sm text-gray-600">1D-CNN</p>
+                    </div>
+                     <div class="flowchart-arrow">→</div>
+                    <div class="flowchart-box">
+                        <p class="font-bold text-lg">決策網路</p>
+                        <p class="text-sm text-gray-600">SAC Actor-Critic</p>
+                    </div>
+                    <div class="flowchart-arrow">→</div>
+                    <div class="flowchart-box">
+                        <p class="font-bold text-lg">動作空間</p>
+                        <p class="text-sm text-gray-600">CPG 參數微調<br><span class="font-mono text-xs">(2,)</span></p>
+                    </div>
+                </div>
+                <hr class="my-10">
+                <h3 class="text-2xl font-semibold text-center mb-8">優化的獎勵函數 (Reward Function)</h3>
+                <div class="grid md:grid-cols-2 gap-8">
+                    <div class="bg-gray-50 p-6 rounded-lg border">
+                        <h4 class="font-bold text-xl mb-3 text-gray-800">A. 基礎任務獎勵</h4>
+                        <p class="text-sm text-gray-600 mb-4">引導機器人完成核心任務：向前行走。</p>
+                        <ul class="space-y-3 text-sm">
+                            <li><strong>前進距離 ($R_d$):</strong> 走得越遠，獎勵越高。</li>
+                            <li><strong>方向維持 ($R_{\theta}$):</strong> 保持直線前進。</li>
+                            <li><strong>成功/失敗 ($c_s, c_f$):</strong> 到達終點或摔倒時的終端獎勵/懲罰。</li>
+                        </ul>
+                    </div>
+                    <div class="bg-gray-50 p-6 rounded-lg border">
+                        <h4 class="font-bold text-xl mb-3 text-gray-800">B. 自然步態優化獎勵 (懲罰項)</h4>
+                        <p class="text-sm text-gray-600 mb-4">引導機器人「走得更好」：更穩、更省力、更流暢。</p>
+                        <ul class="space-y-3 text-sm">
+                            <li><strong>軀幹穩定性 ($P_{stability}$):</strong> 懲罰軀幹過大的晃動。</li>
+                            <li><strong>能量消耗 ($P_{energy}$):</strong> 懲罰過大的馬達力矩。</li>
+                            <li><strong>動作平滑度 ($P_{jerk}$):</strong> 懲罰動作的急促變化。</li>
+                        </ul>
+                    </div>
+                </div>
+                 <div class="mt-8 text-center bg-green-50 p-4 rounded-lg border border-green-200">
+                    <p class="font-semibold text-green-800">最終組合獎勵函數:</p>
+                    <div class="text-lg text-green-900" id="reward-formula"></div>
+                </div>
+            </div>
+        </section>
+
+        <section id="timeline" class="scroll-mt-20">
+            <h2 class="text-3xl font-bold text-center mb-10">專案時程規劃</h2>
+            <div class="bg-white p-6 rounded-xl shadow-lg border border-gray-200">
+                <div class="gantt-container">
+                    <div id="gantt-chart" class="gantt-chart"></div>
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <footer class="bg-gray-800 text-white py-6 mt-20">
+        <div class="container mx-auto px-6 text-center text-sm">
+            <p>&copy; 2025 互動式機器人專案計畫 (V4.2). 為學術研究目的彙整。</p>
+        </div>
+    </footer>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            // Mobile menu
+            const mobileMenuButton = document.getElementById('mobile-menu-button');
+            const mobileMenu = document.getElementById('mobile-menu');
+            mobileMenuButton.addEventListener('click', () => {
+                mobileMenu.classList.toggle('hidden');
+            });
+
+            // Accordion
+            document.querySelectorAll('.accordion-header').forEach(header => {
+                header.addEventListener('click', () => {
+                    const content = header.nextElementSibling;
+                    const icon = header.querySelector('span:last-child');
+                    
+                    if (content.style.maxHeight) {
+                        content.style.maxHeight = null;
+                        icon.style.transform = 'rotate(0deg)';
+                    } else {
+                        document.querySelectorAll('.accordion-content').forEach(c => c.style.maxHeight = null);
+                        document.querySelectorAll('.accordion-header span:last-child').forEach(i => i.style.transform = 'rotate(0deg)');
+                        content.style.maxHeight = content.scrollHeight + "px";
+                        icon.style.transform = 'rotate(180deg)';
+                    }
+                });
+            });
+
+            // KaTeX rendering for the formula
+            const formulaDiv = document.getElementById('reward-formula');
+            formulaDiv.innerHTML = '$$R_{total} = (\\alpha_1 R_d + \\alpha_2 R_{\\theta}) - P_{stability} - P_{energy} - P_{jerk} + C$$';
+            
+            renderMathInElement(document.body, {
+              delimiters: [
+                  {left: '$$', right: '$$', display: true},
+                  {left: '$', right: '$', display: false},
+              ],
+              throwOnError: false
+            });
+            
+            // Gantt Chart
+            const ganttData = {
+                startDate: '2025-08-01',
+                endDate: '2026-03-01',
+                tasks: [
+                    { name: '第一階段：硬體建構', start: '2025-08-01', end: '2025-09-30', milestone: '2025-09-30', milestoneTip: '功能正常的實體機器人' },
+                    { name: '第二階段：虛擬環境', start: '2025-10-01', end: '2025-11-30', milestone: '2025-11-30', milestoneTip: '高擬真度的數位分身' },
+                    { name: '第三階段：AI 訓練', start: '2025-12-01', end: '2026-01-31', milestone: '2026-01-31', milestoneTip: '初步訓練完成的 AI 模型' },
+                    { name: '第四/五階段：部署與分析', start: '2026-02-01', end: '2026-02-28', milestone: '2026-02-28', milestoneTip: '最終專案報告與影片' }
+                ]
+            };
+
+            const ganttChart = document.getElementById('gantt-chart');
+            const startDate = new Date(ganttData.startDate);
+            const endDate = new Date(ganttData.endDate);
+            const totalDays = (endDate - startDate) / (1000 * 60 * 60 * 24);
+
+            // Add month labels
+            let currentMonth = new Date(startDate.getFullYear(), startDate.getMonth(), 1);
+            while(currentMonth < endDate) {
+                const monthLabel = document.createElement('div');
+                monthLabel.className = 'gantt-month-label';
+                const daysFromStart = (currentMonth - startDate) / (1000 * 60 * 60 * 24);
+                monthLabel.style.left = `${(daysFromStart / totalDays) * 100}%`;
+                monthLabel.textContent = `${currentMonth.getFullYear()}/${currentMonth.getMonth() + 1}`;
+                ganttChart.appendChild(monthLabel);
+                currentMonth.setMonth(currentMonth.getMonth() + 1);
+            }
+
+            // Add tasks
+            ganttData.tasks.forEach((task, index) => {
+                const taskStart = new Date(task.start);
+                const taskEnd = new Date(task.end);
+                const startDays = (taskStart - startDate) / (1000 * 60 * 60 * 24);
+                const durationDays = (taskEnd - taskStart) / (1000 * 60 * 60 * 24);
+
+                const left = (startDays / totalDays) * 100;
+                const width = (durationDays / totalDays) * 100;
+                const top = 20 + index * 70;
+                
+                const nameParts = task.name.split('：');
+
+                const phaseLabel = document.createElement('div');
+                phaseLabel.className = 'gantt-phase-label';
+                phaseLabel.style.top = `${top + 8}px`;
+                phaseLabel.textContent = nameParts[0] ? nameParts[0] + '：' : '';
+                ganttChart.appendChild(phaseLabel);
+
+                const bar = document.createElement('div');
+                bar.className = 'gantt-bar';
+                bar.style.left = `${left}%`;
+                bar.style.width = `${width}%`;
+                bar.style.top = `${top}px`;
+                bar.textContent = nameParts[1] || '';
+                ganttChart.appendChild(bar);
+
+                if (task.milestone) {
+                    const milestoneDate = new Date(task.milestone);
+                    const milestoneDays = (milestoneDate - startDate) / (1000 * 60 * 60 * 24);
+                    const milestoneLeft = (milestoneDays / totalDays) * 100;
+                    
+                    const milestone = document.createElement('div');
+                    milestone.className = 'gantt-milestone';
+                    milestone.style.left = `${milestoneLeft}%`;
+                    milestone.style.top = `${top + 10}px`;
+                    
+                    const tooltip = document.createElement('span');
+                    tooltip.className = 'tooltip';
+                    tooltip.textContent = task.milestoneTip;
+                    milestone.appendChild(tooltip);
+
+                    ganttChart.appendChild(milestone);
+                }
+            });
+        });
+    </script>
+</body>
+</html>
