@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>互動式機器人專案企劃書 (V4.4 雲端同步)</title>
+    <title>互動式機器人專案企劃書 (V4.5 可攜式雲端同步)</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -11,10 +11,6 @@
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css" xintegrity="sha384-n8MVd4RsNIU0KOVEMVIROPtOQ9IY5dRytQUsLFNican/eYEGgeEenesCUUDEagLK" crossorigin="anonymous">
     <script src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js" xintegrity="sha384-XjKyOOlGwcjNTAIQHIpgOno0Hl1YQqzUOEleOLALmuqehneUG+vnGctmUb0ZY0l8" crossorigin="anonymous"></script>
     <script src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js" xintegrity="sha384-+VBxd3r6XgURycqtZ117nYw44OOcIax56Z4dCRWbxyPt0Koah1uHoK0o4+/RRE05" crossorigin="anonymous"></script>
-    <!-- Chosen Palette: Calm Harmony -->
-    <!-- Application Structure Plan: A single-page dashboard with a top navigation bar for smooth scrolling. The structure prioritizes clarity and exploration: an overview, a detailed BOM table, an interactive accordion for the five project phases, a dedicated visual section for the AI model architecture and a detailed breakdown of the enhanced reward function, and finally a dynamic Gantt chart. This design transforms the dense V3.0 report into a digestible, interactive technical blueprint, allowing users to deep-dive into specific areas like the AI design or the hardware list. -->
-    <!-- Visualization & Content Choices: Report Info: AI Model Architecture -> Goal: Explain complex data flow -> Viz: HTML/CSS flowchart -> Interaction: None, purely visual -> Justification: Clearly illustrates the multi-stage process from sensor input to motor command, which is hard to grasp from text alone. | Report Info: Enhanced Reward Function -> Goal: Detail the components -> Viz: Formatted cards with KaTeX for math -> Interaction: None -> Justification: Separates base rewards from "naturalness" penalties, making the core AI logic clear. | Report Info: Project Timeline -> Goal: Show schedule -> Viz: Dynamic HTML/CSS Gantt Chart -> Interaction: Hover for details -> Justification: More engaging and provides a better sense of duration and overlap than a table. -->
-    <!-- CONFIRMATION: NO SVG graphics used. NO Mermaid JS used. -->
     <style>
         body {
             font-family: 'Noto Sans TC', sans-serif;
@@ -47,7 +43,7 @@
             transition: all 0.2s ease-in-out;
             display: flex;
             align-items: center;
-            justify-content: center; /* 水平置中文字 */
+            justify-content: center;
             font-size: 0.8rem;
             font-weight: 500;
             color: white;
@@ -132,7 +128,7 @@
 
     <header class="bg-white/90 backdrop-blur-lg shadow-sm sticky top-0 z-50">
         <nav class="container mx-auto px-6 py-4 flex justify-between items-center">
-            <div class="text-xl font-bold text-[#3D405B]">自然步態機器人專案 (V4.4)</div>
+            <div class="text-xl font-bold text-[#3D405B]">自然步態機器人專案 (V4.5)</div>
             <div class="hidden md:flex items-center space-x-6">
                 <a href="#overview" class="text-gray-600 hover:text-[#D48C7A] transition-colors">專案總覽</a>
                 <a href="#bom" class="text-gray-600 hover:text-[#D48C7A] transition-colors">物料清單</a>
@@ -162,7 +158,7 @@
                 <h1 class="text-4xl md:text-5xl font-bold mb-4 text-gray-800">透過深度學習實現人形機器人更自然的行走</h1>
                 <p class="text-lg text-gray-600 max-w-3xl mx-auto">本專案旨在利用深度強化學習，訓練一個神經網路模型，為自建的18自由度人形機器人生成一個比傳統方法更穩定、流暢且「自然」的行走步態。</p>
                 <div class="mt-4 text-sm text-gray-500">
-                    <span>📍 台中市南區</span> | <span id="project-date">2025年7月28日</span>
+                    <span>📍 台中市南區</span> | <span id="project-date">2025年9月10日</span>
                 </div>
             </div>
         </section>
@@ -221,7 +217,7 @@
                         </ul>
                     </div></div>
                 </div>
-                <div class="accordion-item bg-white rounded-lg shadow-md border border-gray-200">
+                 <div class="accordion-item bg-white rounded-lg shadow-md border border-gray-200">
                     <button class="accordion-header w-full text-left p-5 font-semibold text-lg flex justify-between items-center hover:bg-gray-50 transition-colors"><span>第二階段：虛擬環境建構 (數位分身)</span><span class="transform transition-transform duration-300">▼</span></button>
                     <div class="accordion-content"><div class="p-5 border-t text-gray-700 space-y-2">
                         <p><strong>目標：</strong>在電腦中創建一個與實體機器人精確對應的「數位分身」，為 AI 訓練打下基礎。</p>
@@ -348,7 +344,7 @@
 
     <footer class="bg-gray-800 text-white py-6 mt-20">
         <div class="container mx-auto px-6 text-center text-sm">
-            <p>&copy; 2025 互動式機器人專案計畫 (V4.4). 為學術研究目的彙整。</p>
+            <p>&copy; 2025 互動式機器人專案計畫 (V4.5). 為學術研究目的彙整。</p>
         </div>
     </footer>
 
@@ -471,15 +467,22 @@
     <!-- Firebase SDK and Memo Logic -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-        import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
         import { getFirestore, doc, onSnapshot, setDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
-        // --- Firebase Configuration ---
-        // These variables are provided by the environment.
-        const firebaseConfig = JSON.parse(typeof __firebase_config !== 'undefined' ? __firebase_config : '{}');
-        const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
-        const initialAuthToken = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : null;
-
+        // --- STEP 1: 請將從 Firebase 控制台複製的設定物件貼到此處 ---
+        // VVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVV
+        const firebaseConfig = {
+            apiKey: "AIzaSyDBoX3mSer9GMXGE2he0faAi2NQyJO-gKo",
+            authDomain: "robot-project-notes.firebaseapp.com",
+            projectId: "robot-project-notes",
+            storageBucket: "robot-project-notes.firebasestorage.app",
+            messagingSenderId: "867097093002",
+            appId: "1:867097093002:web:f1b44de2336a8d5d4c9e73",
+            measurementId: "G-FPTJ3YS1BC"
+        };
+        // ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+        
         // --- DOM Elements ---
         const memoTextarea = document.getElementById('memo-textarea');
         const saveMemoButton = document.getElementById('save-memo-button');
@@ -494,24 +497,23 @@
             db = getFirestore(app);
         } catch (e) {
             console.error("Firebase initialization failed:", e);
-            memoTextarea.placeholder = "無法初始化雲端服務。";
+            memoTextarea.placeholder = "無法初始化雲端服務，請檢查您的 Firebase 設定。";
         }
 
         // --- Authentication ---
         onAuthStateChanged(auth, user => {
             if (user) {
-                // User is signed in.
-                const userId = user.uid;
-                memoDocRef = doc(db, "artifacts", appId, "users", userId, "memos", "projectMemo");
+                // User is signed in anonymously.
+                // We'll use a single shared document for all users on the GitHub Pages site.
+                memoDocRef = doc(db, "sharedMemo", "robotProject");
                 
-                if (unsubscribeMemo) unsubscribeMemo(); // Unsubscribe from old listener if it exists
+                if (unsubscribeMemo) unsubscribeMemo();
 
-                // Listen for real-time updates from Firestore
                 unsubscribeMemo = onSnapshot(memoDocRef, (docSnap) => {
                     if (docSnap.exists()) {
                         memoTextarea.value = docSnap.data().content || '';
                     } else {
-                        memoTextarea.placeholder = "在這裡開始您的第一則筆記...";
+                        memoTextarea.placeholder = "在您的公開備忘錄中開始第一則筆記...";
                     }
                     memoTextarea.disabled = false;
                     saveMemoButton.disabled = false;
@@ -525,26 +527,17 @@
             } else {
                 // User is signed out.
                 if (unsubscribeMemo) unsubscribeMemo();
-                memoTextarea.placeholder = "正在登入...";
+                memoTextarea.placeholder = "正在匿名登入...";
                 memoTextarea.disabled = true;
                 saveMemoButton.disabled = true;
             }
         });
+        
+        signInAnonymously(auth).catch((error) => {
+            console.error("Anonymous sign-in failed:", error);
+            memoTextarea.placeholder = "無法匿名登入，請檢查 Firebase 驗證設定。";
+        });
 
-        // Sign in with token or anonymously
-        async function authenticateUser() {
-            try {
-                if (initialAuthToken) {
-                    await signInWithCustomToken(auth, initialAuthToken);
-                } else {
-                    await signInAnonymously(auth);
-                }
-            } catch (error) {
-                console.error("Authentication failed:", error);
-                memoTextarea.placeholder = "無法連接至雲端服務，請檢查網路。";
-            }
-        }
-        authenticateUser();
 
         // --- Save Logic ---
         saveMemoButton.addEventListener('click', async () => {
@@ -558,7 +551,7 @@
             try {
                 await setDoc(memoDocRef, { 
                     content: memoTextarea.value,
-                    lastUpdated: serverTimestamp() // Use server time for consistency
+                    lastUpdated: serverTimestamp() 
                 });
                 saveStatus.textContent = '筆記已同步至雲端！';
             } catch (error) {
@@ -567,7 +560,6 @@
             } finally {
                 setTimeout(() => {
                     saveStatus.textContent = '';
-                    // Re-enable based on auth state, not just timer
                     if(auth.currentUser) saveMemoButton.disabled = false;
                 }, 2000);
             }
