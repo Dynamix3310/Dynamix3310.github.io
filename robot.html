@@ -8,13 +8,9 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css" xintegrity="sha384-n8MVd4RsNIU0KOVEMVIROPtOQ9IY5dRytQUsLFNican/eYEGgeEenesCUUDEagLK" crossorigin="anonymous">
-    <script src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js" xintegrity="sha384-XjKyOOlGwcjNTAIQHIpgOno0Hl1YQqzUOEleOLALmuqehneUG+vnGctmUb0ZY0l8" crossorigin="anonymous"></script>
-    <script src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js" xintegrity="sha384-+VBxd3r6XgURycqtZ117nYw44OOcIax56Z4dCRWbxyPt0Koah1uHoK0o4+/RRE05" crossorigin="anonymous"></script>
-    <!-- Chosen Palette: Calm Harmony -->
-    <!-- Application Structure Plan: A single-page dashboard with a top navigation bar for smooth scrolling. The structure prioritizes clarity and exploration: an overview, a detailed BOM table, an interactive accordion for the five project phases, a dedicated visual section for the AI model architecture and a detailed breakdown of the enhanced reward function, and finally a dynamic Gantt chart. This design transforms the dense V3.0 report into a digestible, interactive technical blueprint, allowing users to deep-dive into specific areas like the AI design or the hardware list. -->
-    <!-- Visualization & Content Choices: Report Info: AI Model Architecture -> Goal: Explain complex data flow -> Viz: HTML/CSS flowchart -> Interaction: None, purely visual -> Justification: Clearly illustrates the multi-stage process from sensor input to motor command, which is hard to grasp from text alone. | Report Info: Enhanced Reward Function -> Goal: Detail the components -> Viz: Formatted cards with KaTeX for math -> Interaction: None -> Justification: Separates base rewards from "naturalness" penalties, making the core AI logic clear. | Report Info: Project Timeline -> Goal: Show schedule -> Viz: Dynamic HTML/CSS Gantt Chart -> Interaction: Hover for details -> Justification: More engaging and provides a better sense of duration and overlap than a table. -->
-    <!-- CONFIRMATION: NO SVG graphics used. NO Mermaid JS used. -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css" integrity="sha384-n8MVd4RsNIU0KOVEMVIROPtOQ9IY5dRytQUsLFNican/eYEGgeEenesCUUDEagLK" crossorigin="anonymous">
+    <script src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js" integrity="sha384-XjKyOOlGwcjNTAIQHIpgOno0Hl1YQqzUOEleOLALmuqehneUG+vnGctmUb0ZY0l8" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js" integrity="sha384-+VBxd3r6XgURycqtZ117nYw44OOcIax56Z4dCRWbxyPt0Koah1uHoK0o4+/RRE05" crossorigin="anonymous"></script>
     <style>
         body {
             font-family: 'Noto Sans TC', sans-serif;
@@ -139,6 +135,7 @@
                 <a href="#phases" class="text-gray-600 hover:text-[#D48C7A] transition-colors">執行階段</a>
                 <a href="#ai-design" class="text-gray-600 hover:text-[#D48C7A] transition-colors">AI 設計</a>
                 <a href="#timeline" class="text-gray-600 hover:text-[#D48C7A] transition-colors">時程規劃</a>
+                <a href="#memo" class="text-gray-600 hover:text-[#D48C7A] transition-colors">備忘錄</a>
             </div>
             <button id="mobile-menu-button" class="md:hidden flex items-center">
                 <span class="text-2xl">☰</span>
@@ -150,6 +147,7 @@
             <a href="#phases" class="block py-2 px-4 text-sm hover:bg-gray-50">執行階段</a>
             <a href="#ai-design" class="block py-2 px-4 text-sm hover:bg-gray-50">AI 設計</a>
             <a href="#timeline" class="block py-2 px-4 text-sm hover:bg-gray-50">時程規劃</a>
+            <a href="#memo" class="block py-2 px-4 text-sm hover:bg-gray-50">備忘錄</a>
         </div>
     </header>
 
@@ -331,7 +329,17 @@
             </div>
         </section>
 
-    </main>
+        <section id="memo" class="mt-20 scroll-mt-20">
+            <h2 class="text-3xl font-bold text-center mb-10">備忘錄</h2>
+            <div class="max-w-4xl mx-auto bg-white p-6 rounded-xl shadow-lg border border-gray-200">
+                <textarea id="memo-textarea" class="w-full h-48 p-3 border border-gray-300 rounded-md focus:ring-2 focus:ring-[#7CA5B8] focus:border-transparent transition" placeholder="在此輸入您的筆記..."></textarea>
+                <div class="text-right mt-4">
+                    <span id="save-status" class="text-sm text-green-600 mr-4 transition-opacity duration-300 opacity-0"></span>
+                    <button id="save-memo-button" class="bg-[#3D405B] text-white font-bold py-2 px-6 rounded-lg hover:bg-[#D48C7A] transition-colors">儲存筆記</button>
+                </div>
+            </div>
+        </section>
+        </main>
 
     <footer class="bg-gray-800 text-white py-6 mt-20">
         <div class="container mx-auto px-6 text-center text-sm">
@@ -452,6 +460,29 @@
                     ganttChart.appendChild(milestone);
                 }
             });
+
+            // === START: NEW MEMO SCRIPT ===
+            const memoTextarea = document.getElementById('memo-textarea');
+            const saveMemoButton = document.getElementById('save-memo-button');
+            const saveStatus = document.getElementById('save-status');
+
+            // Load memo from localStorage when page loads
+            if (localStorage.getItem('robotProjectMemo')) {
+                memoTextarea.value = localStorage.getItem('robotProjectMemo');
+            }
+
+            // Save memo to localStorage when button is clicked
+            saveMemoButton.addEventListener('click', () => {
+                localStorage.setItem('robotProjectMemo', memoTextarea.value);
+                saveStatus.textContent = '已儲存！';
+                saveStatus.classList.remove('opacity-0');
+
+                // Hide the message after 2 seconds
+                setTimeout(() => {
+                    saveStatus.classList.add('opacity-0');
+                }, 2000);
+            });
+            // === END: NEW MEMO SCRIPT ===
         });
     </script>
 </body>
