@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>互動式機器人專案企劃書 (V4.3 備忘錄功能)</title>
+    <title>互動式機器人專案企劃書 (V4.4 雲端同步)</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -132,7 +132,7 @@
 
     <header class="bg-white/90 backdrop-blur-lg shadow-sm sticky top-0 z-50">
         <nav class="container mx-auto px-6 py-4 flex justify-between items-center">
-            <div class="text-xl font-bold text-[#3D405B]">自然步態機器人專案 (V4.3)</div>
+            <div class="text-xl font-bold text-[#3D405B]">自然步態機器人專案 (V4.4)</div>
             <div class="hidden md:flex items-center space-x-6">
                 <a href="#overview" class="text-gray-600 hover:text-[#D48C7A] transition-colors">專案總覽</a>
                 <a href="#bom" class="text-gray-600 hover:text-[#D48C7A] transition-colors">物料清單</a>
@@ -333,14 +333,13 @@
             </div>
         </section>
         
-        <!-- New Memo Section -->
         <section id="memo" class="scroll-mt-20">
-            <h2 class="text-3xl font-bold text-center mb-10">專案備忘錄</h2>
+            <h2 class="text-3xl font-bold text-center mb-10">專案備忘錄 (雲端同步)</h2>
             <div class="max-w-4xl mx-auto bg-white p-6 rounded-xl shadow-lg border border-gray-200">
-                <textarea id="memo-textarea" class="w-full h-48 p-4 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 transition" placeholder="在這裡輸入您的筆記..."></textarea>
+                <textarea id="memo-textarea" class="w-full h-48 p-4 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 transition" placeholder="正在連接雲端備忘錄..." disabled></textarea>
                 <div class="mt-4 flex justify-end items-center">
                      <p id="save-status" class="text-sm text-gray-500 mr-4 h-4"></p>
-                    <button id="save-memo-button" class="bg-[#7CA5B8] text-white font-bold py-2 px-6 rounded-lg hover:bg-[#6A93A5] transition-colors shadow-sm">儲存筆記</button>
+                    <button id="save-memo-button" class="bg-[#7CA5B8] text-white font-bold py-2 px-6 rounded-lg hover:bg-[#6A93A5] transition-colors shadow-sm disabled:bg-gray-400" disabled>同步筆記</button>
                 </div>
             </div>
         </section>
@@ -349,7 +348,7 @@
 
     <footer class="bg-gray-800 text-white py-6 mt-20">
         <div class="container mx-auto px-6 text-center text-sm">
-            <p>&copy; 2025 互動式機器人專案計畫 (V4.3). 為學術研究目的彙整。</p>
+            <p>&copy; 2025 互動式機器人專案計畫 (V4.4). 為學術研究目的彙整。</p>
         </div>
     </footer>
 
@@ -466,24 +465,114 @@
                     ganttChart.appendChild(milestone);
                 }
             });
+        });
+    </script>
 
-            // Memo functionality
-            const memoTextarea = document.getElementById('memo-textarea');
-            const saveMemoButton = document.getElementById('save-memo-button');
-            const saveStatus = document.getElementById('save-status');
+    <!-- Firebase SDK and Memo Logic -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore, doc, onSnapshot, setDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
-            // Load saved memo from localStorage
-            memoTextarea.value = localStorage.getItem('projectMemo') || '';
+        // --- Firebase Configuration ---
+        // These variables are provided by the environment.
+        const firebaseConfig = JSON.parse(typeof __firebase_config !== 'undefined' ? __firebase_config : '{}');
+        const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
+        const initialAuthToken = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : null;
 
-            // Save memo to localStorage on button click
-            saveMemoButton.addEventListener('click', () => {
-                localStorage.setItem('projectMemo', memoTextarea.value);
-                saveStatus.textContent = '筆記已儲存！';
+        // --- DOM Elements ---
+        const memoTextarea = document.getElementById('memo-textarea');
+        const saveMemoButton = document.getElementById('save-memo-button');
+        const saveStatus = document.getElementById('save-status');
+        
+        // --- Firebase Initialization ---
+        let app, auth, db, memoDocRef, unsubscribeMemo;
+
+        try {
+            app = initializeApp(firebaseConfig);
+            auth = getAuth(app);
+            db = getFirestore(app);
+        } catch (e) {
+            console.error("Firebase initialization failed:", e);
+            memoTextarea.placeholder = "無法初始化雲端服務。";
+        }
+
+        // --- Authentication ---
+        onAuthStateChanged(auth, user => {
+            if (user) {
+                // User is signed in.
+                const userId = user.uid;
+                memoDocRef = doc(db, "artifacts", appId, "users", userId, "memos", "projectMemo");
+                
+                if (unsubscribeMemo) unsubscribeMemo(); // Unsubscribe from old listener if it exists
+
+                // Listen for real-time updates from Firestore
+                unsubscribeMemo = onSnapshot(memoDocRef, (docSnap) => {
+                    if (docSnap.exists()) {
+                        memoTextarea.value = docSnap.data().content || '';
+                    } else {
+                        memoTextarea.placeholder = "在這裡開始您的第一則筆記...";
+                    }
+                    memoTextarea.disabled = false;
+                    saveMemoButton.disabled = false;
+                }, (error) => {
+                    console.error("Error listening to memo:", error);
+                    memoTextarea.placeholder = "無法讀取雲端筆記。";
+                    memoTextarea.disabled = true;
+                    saveMemoButton.disabled = true;
+                });
+
+            } else {
+                // User is signed out.
+                if (unsubscribeMemo) unsubscribeMemo();
+                memoTextarea.placeholder = "正在登入...";
+                memoTextarea.disabled = true;
+                saveMemoButton.disabled = true;
+            }
+        });
+
+        // Sign in with token or anonymously
+        async function authenticateUser() {
+            try {
+                if (initialAuthToken) {
+                    await signInWithCustomToken(auth, initialAuthToken);
+                } else {
+                    await signInAnonymously(auth);
+                }
+            } catch (error) {
+                console.error("Authentication failed:", error);
+                memoTextarea.placeholder = "無法連接至雲端服務，請檢查網路。";
+            }
+        }
+        authenticateUser();
+
+        // --- Save Logic ---
+        saveMemoButton.addEventListener('click', async () => {
+            if (!memoDocRef) {
+                saveStatus.textContent = '錯誤：使用者尚未登入';
+                return;
+            }
+            saveStatus.textContent = '儲存中...';
+            saveMemoButton.disabled = true;
+
+            try {
+                await setDoc(memoDocRef, { 
+                    content: memoTextarea.value,
+                    lastUpdated: serverTimestamp() // Use server time for consistency
+                });
+                saveStatus.textContent = '筆記已同步至雲端！';
+            } catch (error) {
+                console.error("Error writing document: ", error);
+                saveStatus.textContent = '儲存失敗！';
+            } finally {
                 setTimeout(() => {
                     saveStatus.textContent = '';
-                }, 2000); // Clear the message after 2 seconds
-            });
+                    // Re-enable based on auth state, not just timer
+                    if(auth.currentUser) saveMemoButton.disabled = false;
+                }, 2000);
+            }
         });
     </script>
 </body>
 </html>
+
